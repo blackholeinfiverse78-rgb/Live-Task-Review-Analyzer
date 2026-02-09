@@ -47,7 +47,7 @@ async def review_task(
         else:
             raise HTTPException(status_code=400, detail="Must provide either task_id or payload")
             
-        return ReviewEngine.review_task(target_task, is_demo=is_demo, demo_type=demo_type)
+        return ReviewEngine.review_task(target_task)
         
     except HTTPException:
         raise

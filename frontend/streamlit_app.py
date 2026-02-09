@@ -19,18 +19,18 @@ st.set_page_config(
 DEMO_DATA = {
     "Live Editor": {"title": "", "desc": "", "demo": False, "type": None},
     "Good Submission": {
-        "title": "Build a Secure Async API Gateway for User Authentication",
-        "desc": "The objective is to implement a robust API gateway. Requirements include schema validation using Pydantic, security constraints for JWT, and async database connections. This task ensures production readiness by adding caching and frontend integration layers.",
+        "title": "Build a Secure Async API Gateway for User Authentication and Management",
+        "desc": "The objective is to implement a robust API gateway. Requirements include schema validation using Pydantic, security constraints for JWT, and async database connections. This task ensures production readiness by adding caching and frontend integration layers. Final success criteria: 100% test coverage and full documentation.",
         "demo": True, "type": "good"
     },
     "Partial Submission": {
-        "title": "Setup basic API",
-        "desc": "We need an API to handle some requests. The requirement is to make it work. It should connect to a database eventually.",
+        "title": "Standardized Implementation of a basic API to handle standardized requests",
+        "desc": "The Requirement is to make it work. The objective is to handle some requests. It should connect to a database eventually. Basic security constraints apply.",
         "demo": True, "type": "partial"
     },
     "Poor Submission": {
-        "title": "fix stuff",
-        "desc": "fix the bugs in the code",
+        "title": "Fix bug",
+        "desc": "fix the bugs in the code quickly",
         "demo": True, "type": "poor"
     }
 }
@@ -74,29 +74,47 @@ if run_btn:
                 res.raise_for_status()
                 next_t = res.json()
                 
-            # Render Frozen UI
+            # Render Premium UI
             st.divider()
-            c1, c2 = st.columns(2)
+            
+            # Status Badge Header
+            status_colors = {"pass": "green", "borderline": "orange", "fail": "red"}
+            status_color = status_colors.get(review['status'], "blue")
+            st.markdown(f"### Status: :{status_color}[{review['status'].upper()}]")
+
+            c1, c2, c3 = st.columns(3)
             c1.metric("Score", f"{review['score']}/100")
             c2.metric("Readiness", f"{review['readiness_percent']}%")
+            c3.metric("Eval Time", f"{review['meta']['evaluation_time_ms']}ms")
             
-            st.info(f"**Analysis:** {review['reviewer_summary']}")
-            
-            with st.expander("Gaps Identified", expanded=True):
-                if review['gaps']:
-                    for gap in review['gaps']: st.write(f"🚩 {gap}")
-                else: st.success("No structural gaps detected.")
+            # Analysis Radar/Metrics
+            st.markdown("#### Technical Analysis")
+            a1, a2, a3 = st.columns(3)
+            a1.progress(review['analysis']['technical_quality'] / 100, text=f"Tech: {review['analysis']['technical_quality']}%")
+            a2.progress(review['analysis']['clarity'] / 100, text=f"Clarity: {review['analysis']['clarity']}%")
+            a3.progress(review['analysis']['discipline_signals'] / 100, text=f"Discipline: {review['analysis']['discipline_signals']}%")
 
-            with st.expander("System Hints", expanded=True):
+            with st.expander("Failure Reasons & Gaps", expanded=True):
+                if review['failure_reasons']:
+                    for gap in review['failure_reasons']: 
+                        st.markdown(f"❌ {gap}")
+                else: 
+                    st.success("No critical failure reasons detected.")
+
+            with st.expander("Optimization Hints", expanded=True):
                 if review['improvement_hints']:
-                    for h in review['improvement_hints']: st.write(f"💡 {h}")
-                else: st.write("Task quality is sufficient for the current phase.")
+                    for h in review['improvement_hints']: 
+                        st.markdown(f"✨ {h}")
+                else: 
+                    st.write("Task quality meets all optimization thresholds.")
             
-            st.success(f"**Recommended Next Step:** {next_t['next_task_title']}")
-            st.caption(f"Rationale: {next_t['rationale']}")
+            st.info(f"**Recommended Next Step:** {next_t['next_task_title']}")
+            st.caption(f"**Rationale:** {next_t['rationale']}")
+            
+            st.toast(f"Evaluation complete in {review['meta']['evaluation_time_ms']}ms using {review['meta']['mode']} mode.", icon="✅")
             
         except Exception as e:
-            st.error("System Error: Analysis could not be completed at this time.")
+            st.error(f"System Error: Analysis could not be completed. {str(e)}")
 
 st.sidebar.markdown("**System: Production Locked**")
 try:

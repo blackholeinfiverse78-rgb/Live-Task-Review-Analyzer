@@ -27,12 +27,23 @@ class Task(TaskBase):
     task_id: str
     timestamp: datetime
 
+class Analysis(BaseModel):
+    technical_quality: int = Field(..., ge=0, le=100)
+    clarity: int = Field(..., ge=0, le=100)
+    discipline_signals: int = Field(..., ge=0, le=100)
+
+class Meta(BaseModel):
+    evaluation_time_ms: int
+    mode: str = Field(..., pattern="^(rule|ml|hybrid)$")
+
 class ReviewOutput(BaseModel):
     score: int = Field(..., ge=0, le=100)
     readiness_percent: int = Field(..., ge=0, le=100)
-    gaps: List[str] = Field(default_factory=list)
+    status: str = Field(..., pattern="^(pass|borderline|fail)$")
+    failure_reasons: List[str] = Field(default_factory=list)
     improvement_hints: List[str] = Field(default_factory=list)
-    reviewer_summary: str
+    analysis: Analysis
+    meta: Meta
 
 class NextTask(BaseModel):
     next_task_title: str

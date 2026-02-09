@@ -3,50 +3,26 @@ Task Review AI - Modular Engine v2.1
 Updated on: 2026-02-05
 Logic: Modular Deterministic Rule Evaluators
 """
-from ..models.schemas import Task, ReviewOutput
+from ..models.schemas import Task, ReviewOutput, Analysis, Meta
 import logging
+import time
 
 logger = logging.getLogger("task_review_system")
 
 class ReviewEngine:
-    # Locked Demo Scenarios - Permanent and Immutable
-    DEMO_SCENARIOS = {
-        "good": ReviewOutput(
-            score=95,
-            readiness_percent=90,
-            gaps=[],
-            improvement_hints=["Maintain current documentation standards."],
-            reviewer_summary="EXCELLENT: Highly detailed task with clear technical constraints and success criteria."
-        ),
-        "partial": ReviewOutput(
-            score=65,
-            readiness_percent=60,
-            gaps=["Missing success criteria", "Vague technical stack"],
-            improvement_hints=["Explicitly list the technologies involved.", "Define what 'done' looks like."],
-            reviewer_summary="ADEQUATE: The task is understood but lacks the depth required for immediate implementation."
-        ),
-        "poor": ReviewOutput(
-            score=30,
-            readiness_percent=25,
-            gaps=["Extremely brief description", "No context provided", "Missing objective"],
-            improvement_hints=["Restart the requirement gathering phase.", "Provide at least 3 paragraphs of context."],
-            reviewer_summary="INSUFFICIENT: Task is too under-specified to be actionable by any engineering team."
-        )
-    }
-
     @staticmethod
-    def _evaluate_title(title: str, gaps: list, hints: list) -> int:
+    def _evaluate_title(title: str, failure_reasons: list, hints: list) -> int:
         t_len = len(title)
         if t_len > 40:
             return 15
         if t_len > 20:
             return 10
-        gaps.append("Brief title reduces context.")
+        failure_reasons.append("Brief title reduces context.")
         hints.append("Expand title to 40+ characters.")
         return 5
 
     @staticmethod
-    def _evaluate_description(description: str, gaps: list, hints: list) -> int:
+    def _evaluate_description(description: str, failure_reasons: list, hints: list) -> int:
         d_len = len(description)
         if d_len > 500:
             return 30
@@ -54,66 +30,82 @@ class ReviewEngine:
             return 20
         if d_len > 50:
             return 10
-        gaps.append("Minimal description substance.")
+        failure_reasons.append("Minimal description substance.")
         hints.append("Provide detailed technical context.")
         return 0
 
     @staticmethod
-    def _evaluate_markers(description: str, gaps: list, hints: list) -> int:
+    def _evaluate_markers(description: str, failure_reasons: list, hints: list) -> int:
         score = 0
         description_lower = description.lower()
         for marker in ["requirement", "objective", "constraint"]:
             if marker in description_lower:
                 score += 10
             else:
-                gaps.append(f"Missing logical marker: '{marker}'")
+                failure_reasons.append(f"Missing logical marker: '{marker}'")
                 hints.append(f"Define task {marker}s.")
         return score
 
     @staticmethod
-    def _evaluate_technical_keywords(description: str, gaps: list, hints: list) -> int:
-        tech = ["api", "database", "schema", "validation", "security", "async", "cache", "frontend"]
+    def _evaluate_technical_keywords(description: str, failure_reasons: list, hints: list) -> int:
+        tech = ["api", "database", "schema", "validation", "security", "async", "cache", "frontend", "readme", "documentation", "test", "coverage"]
         description_lower = description.lower()
         found = [k for k in tech if k in description_lower]
         score = min(25, len(found) * 5)
         
         if len(found) < 2:
-            gaps.append("Low technical specificity.")
-            hints.append("Include technical implementation details.")
+            failure_reasons.append("Low technical specificity.")
+            hints.append("Include technical implementation details (e.g., API, Database, Schema).")
         return score
 
     @classmethod
-    def review_task(cls, task: Task, is_demo: bool = False, demo_type: str = None) -> ReviewOutput:
+    def review_task(cls, task: Task) -> ReviewOutput:
         """
         Pure deterministic review processor. Same Input -> Same Output.
+        Now strictly enforces the mandatory JSON contract.
         """
-        if is_demo and demo_type in cls.DEMO_SCENARIOS:
-            return cls.DEMO_SCENARIOS[demo_type]
-
-        gaps = []
-        hints = []
-        score = 0
+        start_time = time.time()
         
-        score += cls._evaluate_title(task.task_title, gaps, hints)
-        score += cls._evaluate_description(task.task_description, gaps, hints)
-        score += cls._evaluate_markers(task.task_description, gaps, hints)
-        score += cls._evaluate_technical_keywords(task.task_description, gaps, hints)
-
-        final_score = min(100, score)
+        failure_reasons = []
+        hints = []
+        
+        # Component scores
+        title_score = cls._evaluate_title(task.task_title, failure_reasons, hints)
+        desc_score = cls._evaluate_description(task.task_description, failure_reasons, hints)
+        marker_score = cls._evaluate_markers(task.task_description, failure_reasons, hints)
+        tech_score = cls._evaluate_technical_keywords(task.task_description, failure_reasons, hints)
+        
+        final_score = min(100, title_score + desc_score + marker_score + tech_score)
         readiness = int(final_score * 0.85) if final_score < 90 else final_score
         
-        summary = f"Analysis complete (Score: {final_score}). "
+        # Status Mapping
         if final_score >= 85:
-            summary += "Production ready."
+            status = "pass"
         elif final_score >= 60:
-            summary += "Minor refinement required."
+            status = "borderline"
         else:
-            summary += "Major overhaul required."
+            status = "fail"
+
+        # Analysis Normalization
+        analysis = Analysis(
+            technical_quality=int((tech_score / 25) * 100),
+            clarity=int(((title_score + desc_score) / 45) * 100),
+            discipline_signals=int((marker_score / 30) * 100)
+        )
+        
+        # Meta calculation
+        eval_duration = int((time.time() - start_time) * 1000)
+        meta = Meta(
+            evaluation_time_ms=max(1, eval_duration),
+            mode="rule"
+        )
 
         return ReviewOutput(
             score=final_score,
             readiness_percent=readiness,
-            gaps=gaps,
+            status=status,
+            failure_reasons=failure_reasons,
             improvement_hints=hints,
-            reviewer_summary=summary
+            analysis=analysis,
+            meta=meta
         )
