@@ -87,6 +87,14 @@ Run tests using:
 python -m pytest
 ```
 
+## 📚 Detailed Documentation
+For deeper technical insights, refer to the exhaustive guides in the `/docs` folder:
+- [**Architecture Overview**](./docs/ARCHITECTURE.md): System design and component interactions.
+- [**API Contracts**](./docs/API_CONTRACTS.md): Payload schemas and endpoint behavior.
+- [**Evaluation Engine**](./docs/EVALUATION_LOGIC.md): In-depth look at the deterministic scoring logic.
+- [**Testing Guide**](./docs/TESTING_GUIDE.md): Instructions for running the validation suite.
+- [**Security Audit**](./docs/SECURITY_AUDIT.md): Summary of hardening measures.
+
 ## 🛡️ Security Audit
 - **CORS Hardening**: Configured middleware for safe cross-origin demo interactions.
 - **Input Sanitization**: Pydantic-enforced character constraints and length limits.
