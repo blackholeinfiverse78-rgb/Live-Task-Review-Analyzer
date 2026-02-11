@@ -10,6 +10,11 @@ from .api import task_submit, task_review, next_task
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import sys
+import os
+import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,9 +30,15 @@ app = FastAPI(
 )
 
 # Security: CORS Middleware
+allowed_origins = os.getenv("ALLOWED_ORIGINS", '["*"]')
+try:
+    origins = json.loads(allowed_origins)
+except:
+    origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Restricted for production, but allowed for demo flexibility
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,11 +46,25 @@ app.add_middleware(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Standardized failure contract as requested by the user
+    errors = [f"{e['loc'][-1]}: {e['msg']}" for e in exc.errors()]
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": "Invalid Input Data",
-            "errors": [f"{e['loc'][-1]}: {e['msg']}" for e in exc.errors()]
+            "score": 0,
+            "readiness_percent": 0,
+            "status": "fail",
+            "failure_reasons": ["Validation Failure"] + errors,
+            "improvement_hints": ["Ensure all fields meet length requirements (Title: 5-100, Desc: 10-2000, Name: 2-50)."],
+            "analysis": {
+                "technical_quality": 0,
+                "clarity": 0,
+                "discipline_signals": 0
+            },
+            "meta": {
+                "evaluation_time_ms": 0,
+                "mode": "rule"
+            }
         }
     )
 
@@ -70,4 +95,6 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    host = os.getenv("BACKEND_HOST", "0.0.0.0")
+    port = int(os.getenv("BACKEND_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

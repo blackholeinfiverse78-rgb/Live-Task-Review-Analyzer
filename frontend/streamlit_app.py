@@ -5,9 +5,28 @@ Locked on: 2026-02-02
 import streamlit as st
 import requests
 import logging
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+import time
 
-BACKEND_URL = "http://localhost:8000/api/v1/task"
+load_dotenv()
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000/api/v1/task")
+TIMEOUT = 10  # Seconds
+MAX_RETRIES = 3
+
+def safe_post(url, json_data):
+    """Robust POST with retries for demo network variability"""
+    for attempt in range(MAX_RETRIES):
+        try:
+            res = requests.post(url, json=json_data, timeout=TIMEOUT)
+            return res
+        except requests.exceptions.RequestException as e:
+            if attempt == MAX_RETRIES - 1:
+                raise e
+            time.sleep(1) # Wait before retry
+    return None
 
 st.set_page_config(
     page_title="Task Review AI (PROD)",
@@ -54,25 +73,33 @@ if run_btn:
         try:
             # Phase 1: Storage
             with st.spinner("Processing..."):
-                res = requests.post(f"{BACKEND_URL}/submit", json={
+                res = safe_post(f"{BACKEND_URL}/submit", {
                     "task_title": t_title, "task_description": t_desc,
                     "submitted_by": submitted_by, "is_demo": current["demo"],
                     "demo_type": current["type"]
-                }, timeout=5)
-                if res.status_code != 200:
-                    st.error("Submission Rejected. check input criteria.")
+                })
+                
+                if res.status_code == 422:
+                    review = res.json()
+                    # Mock a "Next Task" for failures
+                    next_t = {
+                        "next_task_title": "Input Fix Required",
+                        "rationale": "Validation thresholds not met."
+                    }
+                elif res.status_code != 200:
+                    st.error(f"System Error: {res.text}")
                     st.stop()
-                tid = res.json()["task_id"]
+                else:
+                    tid = res.json()["task_id"]
+                    # Phase 2: Analysis
+                    res = safe_post(f"{BACKEND_URL}/review", {"task_id": tid})
+                    res.raise_for_status()
+                    review = res.json()
 
-            # Phase 2: Analysis
-                res = requests.post(f"{BACKEND_URL}/review", json={"task_id": tid}, timeout=5)
-                res.raise_for_status()
-                review = res.json()
-
-            # Phase 3: Transition
-                res = requests.post(f"{BACKEND_URL}/generate-next", json=review, timeout=5)
-                res.raise_for_status()
-                next_t = res.json()
+                    # Phase 3: Transition
+                    res = safe_post(f"{BACKEND_URL}/generate-next", review)
+                    res.raise_for_status()
+                    next_t = res.json()
                 
             # Render Premium UI
             st.divider()
@@ -118,7 +145,8 @@ if run_btn:
 
 st.sidebar.markdown("**System: Production Locked**")
 try:
-    health = requests.get("http://localhost:8000/health", timeout=1).json()
+    health_url = BACKEND_URL.replace("/api/v1/task", "/health")
+    health = requests.get(health_url, timeout=1).json()
     st.sidebar.success(f"Backend v{health['version']}")
 except:
     st.sidebar.error("Backend Offline")
