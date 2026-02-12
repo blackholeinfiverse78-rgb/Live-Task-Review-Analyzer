@@ -149,10 +149,10 @@ if run_btn:
 
 # Sidebar status
 st.sidebar.markdown("**System: Production Locked**")
+health_url = BACKEND_URL.replace("/api/v1/task", "/health")
 try:
-    health_url = BACKEND_URL.replace("/api/v1/task", "/health")
     # Increased timeout for Render Free Tier cold starts
-    health_res = requests.get(health_url, timeout=5)
+    health_res = requests.get(health_url, timeout=10) # 10s for heavy cold starts
     if health_res.status_code == 200:
         health = health_res.json()
         st.sidebar.success(f"Backend v{health['version']}")
@@ -160,7 +160,7 @@ try:
         st.sidebar.warning(f"Backend Status: {health_res.status_code}")
 except Exception as e:
     st.sidebar.error("Backend Offline")
-    if not os.getenv("RENDER"): # Only show detail in non-render or if needed for debugging
-         st.sidebar.caption(f"Error: {str(e)[:50]}...")
+    st.sidebar.caption(f"URL: {health_url}")
+    st.sidebar.caption(f"Error: {type(e).__name__}")
 
 st.sidebar.caption("Deterministic Engine v2.0")
