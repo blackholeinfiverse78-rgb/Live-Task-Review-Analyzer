@@ -147,12 +147,20 @@ if run_btn:
         except Exception as e:
             st.error(f"System Error: Analysis could not be completed. {str(e)}")
 
+# Sidebar status
 st.sidebar.markdown("**System: Production Locked**")
 try:
     health_url = BACKEND_URL.replace("/api/v1/task", "/health")
-    health = requests.get(health_url, timeout=1).json()
-    st.sidebar.success(f"Backend v{health['version']}")
-except:
+    # Increased timeout for Render Free Tier cold starts
+    health_res = requests.get(health_url, timeout=5)
+    if health_res.status_code == 200:
+        health = health_res.json()
+        st.sidebar.success(f"Backend v{health['version']}")
+    else:
+        st.sidebar.warning(f"Backend Status: {health_res.status_code}")
+except Exception as e:
     st.sidebar.error("Backend Offline")
+    if not os.getenv("RENDER"): # Only show detail in non-render or if needed for debugging
+         st.sidebar.caption(f"Error: {str(e)[:50]}...")
 
 st.sidebar.caption("Deterministic Engine v2.0")
