@@ -1,0 +1,304 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000/api/v1/task';
+
+const DEMO_DATA = {
+    'Live Editor': { title: '', desc: '', demo: false, type: null },
+    'Good Submission': {
+        title: 'Build a Secure Async API Gateway for User Authentication and Management',
+        desc: 'The objective is to implement a robust API gateway. Requirements include schema validation using Pydantic, security constraints for JWT, and async database connections. This task ensures production readiness by adding caching and frontend integration layers. Final success criteria: 100% test coverage and full documentation.',
+        demo: true,
+        type: 'good'
+    },
+    'Partial Submission': {
+        title: 'Standardized Implementation of a basic API to handle standardized requests',
+        desc: 'The Requirement is to make it work. The objective is to handle some requests. It should connect to a database eventually. Basic security constraints apply.',
+        demo: true,
+        type: 'partial'
+    },
+    'Poor Submission': {
+        title: 'Fix bug',
+        desc: 'fix the bugs in the code quickly',
+        demo: true,
+        type: 'poor'
+    }
+};
+
+function App() {
+    const [scenario, setScenario] = useState('Live Editor');
+    const [taskTitle, setTaskTitle] = useState('');
+    const [taskDesc, setTaskDesc] = useState('');
+    const [submittedBy, setSubmittedBy] = useState('Demo Professional');
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [error, setError] = useState(null);
+    const [backendStatus, setBackendStatus] = useState('checking');
+
+    useEffect(() => {
+        const current = DEMO_DATA[scenario];
+        setTaskTitle(current.title);
+        setTaskDesc(current.desc);
+        setResult(null);
+        setError(null);
+    }, [scenario]);
+
+    useEffect(() => {
+        checkBackendHealth();
+    }, []);
+
+    const checkBackendHealth = async () => {
+        try {
+            const healthUrl = BACKEND_URL.replace('/api/v1/task', '/health');
+            const response = await axios.get(healthUrl, { timeout: 5000 });
+            if (response.status === 200) {
+                setBackendStatus('online');
+            }
+        } catch (err) {
+            setBackendStatus('offline');
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setResult(null);
+
+        const current = DEMO_DATA[scenario];
+
+        try {
+            // Phase 1: Submit task
+            const submitResponse = await axios.post(`${BACKEND_URL}/submit`, {
+                task_title: taskTitle,
+                task_description: taskDesc,
+                submitted_by: submittedBy,
+                is_demo: current.demo,
+                demo_type: current.type
+            });
+
+            const taskId = submitResponse.data.task_id;
+
+            // Phase 2: Review task
+            const reviewResponse = await axios.post(`${BACKEND_URL}/review`, {
+                task_id: taskId
+            });
+
+            const reviewData = reviewResponse.data;
+
+            // Phase 3: Generate next task
+            const nextTaskResponse = await axios.post(`${BACKEND_URL}/generate-next`, reviewData);
+            const nextTaskData = nextTaskResponse.data;
+
+            setResult({ review: reviewData, nextTask: nextTaskData });
+        } catch (err) {
+            if (err.response?.status === 422) {
+                setResult({ review: err.response.data, nextTask: { next_task_title: 'Input Fix Required', rationale: 'Validation thresholds not met.' } });
+            } else {
+                setError(err.response?.data?.detail || err.message || 'An error occurred');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getStatusColor = (status) => {
+        const colors = {
+            pass: '#10b981',
+            borderline: '#f59e0b',
+            fail: '#ef4444'
+        };
+        return colors[status] || '#3b82f6';
+    };
+
+    const isDisabled = DEMO_DATA[scenario].demo;
+
+    return (
+        <div className="App">
+            <div className="container">
+                <header className="header">
+                    <div className="header-content">
+                        <h1 className="title">🛡️ Task Review AI</h1>
+                        <p className="subtitle">Deterministic Engineering Task Analysis System</p>
+                    </div>
+                    <div className={`status-badge ${backendStatus}`}>
+                        <span className="status-dot"></span>
+                        Backend {backendStatus === 'online' ? 'Online' : backendStatus === 'offline' ? 'Offline' : 'Checking...'}
+                    </div>
+                </header>
+
+                <div className="main-card">
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label htmlFor="scenario">Select Scenario</label>
+                            <select
+                                id="scenario"
+                                value={scenario}
+                                onChange={(e) => setScenario(e.target.value)}
+                                className="select-input"
+                            >
+                                {Object.keys(DEMO_DATA).map((key) => (
+                                    <option key={key} value={key}>{key}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="title">Task Title</label>
+                            <input
+                                id="title"
+                                type="text"
+                                value={taskTitle}
+                                onChange={(e) => setTaskTitle(e.target.value)}
+                                disabled={isDisabled}
+                                className="text-input"
+                                placeholder="Enter task title..."
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="description">Task Description</label>
+                            <textarea
+                                id="description"
+                                value={taskDesc}
+                                onChange={(e) => setTaskDesc(e.target.value)}
+                                disabled={isDisabled}
+                                className="textarea-input"
+                                rows="8"
+                                placeholder="Enter detailed task description..."
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="name">Your Name</label>
+                            <input
+                                id="name"
+                                type="text"
+                                value={submittedBy}
+                                onChange={(e) => setSubmittedBy(e.target.value)}
+                                className="text-input"
+                                placeholder="Enter your name..."
+                            />
+                        </div>
+
+                        <button type="submit" className="submit-btn" disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <span className="spinner"></span>
+                                    Analyzing...
+                                </>
+                            ) : (
+                                'Analyze Submission'
+                            )}
+                        </button>
+                    </form>
+
+                    {error && (
+                        <div className="error-box">
+                            <strong>Error:</strong> {error}
+                        </div>
+                    )}
+
+                    {result && (
+                        <div className="results-section">
+                            <div className="divider"></div>
+
+                            <div className="status-header" style={{ color: getStatusColor(result.review.status) }}>
+                                <h2>Status: {result.review.status.toUpperCase()}</h2>
+                            </div>
+
+                            <div className="metrics-grid">
+                                <div className="metric-card">
+                                    <div className="metric-label">Score</div>
+                                    <div className="metric-value">{result.review.score}/100</div>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-label">Readiness</div>
+                                    <div className="metric-value">{result.review.readiness_percent}%</div>
+                                </div>
+                                <div className="metric-card">
+                                    <div className="metric-label">Eval Time</div>
+                                    <div className="metric-value">{result.review.meta.evaluation_time_ms}ms</div>
+                                </div>
+                            </div>
+
+                            <div className="analysis-section">
+                                <h3>Technical Analysis</h3>
+                                <div className="progress-grid">
+                                    <div className="progress-item">
+                                        <div className="progress-header">
+                                            <span>Technical Quality</span>
+                                            <span>{result.review.analysis.technical_quality}%</span>
+                                        </div>
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{ width: `${result.review.analysis.technical_quality}%` }}></div>
+                                        </div>
+                                    </div>
+                                    <div className="progress-item">
+                                        <div className="progress-header">
+                                            <span>Clarity</span>
+                                            <span>{result.review.analysis.clarity}%</span>
+                                        </div>
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{ width: `${result.review.analysis.clarity}%` }}></div>
+                                        </div>
+                                    </div>
+                                    <div className="progress-item">
+                                        <div className="progress-header">
+                                            <span>Discipline Signals</span>
+                                            <span>{result.review.analysis.discipline_signals}%</span>
+                                        </div>
+                                        <div className="progress-bar">
+                                            <div className="progress-fill" style={{ width: `${result.review.analysis.discipline_signals}%` }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {result.review.failure_reasons && result.review.failure_reasons.length > 0 && (
+                                <div className="info-section failure">
+                                    <h3>❌ Failure Reasons & Gaps</h3>
+                                    <ul>
+                                        {result.review.failure_reasons.map((reason, idx) => (
+                                            <li key={idx}>{reason}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {result.review.improvement_hints && result.review.improvement_hints.length > 0 && (
+                                <div className="info-section hints">
+                                    <h3>✨ Optimization Hints</h3>
+                                    <ul>
+                                        {result.review.improvement_hints.map((hint, idx) => (
+                                            <li key={idx}>{hint}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            <div className="next-task-section">
+                                <div className="next-task-card">
+                                    <h3>💡 Recommended Next Step</h3>
+                                    <p className="next-task-title">{result.nextTask.next_task_title}</p>
+                                    <p className="next-task-rationale"><strong>Rationale:</strong> {result.nextTask.rationale}</p>
+                                </div>
+                            </div>
+
+                            <div className="toast">
+                                ✅ Evaluation complete in {result.review.meta.evaluation_time_ms}ms using {result.review.meta.mode} mode.
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <footer className="footer">
+                    <p>Production Locked • Deterministic Engine v2.0</p>
+                </footer>
+            </div>
+        </div>
+    );
+}
+
+export default App;

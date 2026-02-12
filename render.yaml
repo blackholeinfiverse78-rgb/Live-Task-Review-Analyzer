@@ -14,18 +14,16 @@ services:
       - key: ALLOWED_ORIGINS
         value: '["*"]'
 
-  # Frontend (Streamlit)
+  # Frontend (React)
   - type: web
-    name: task-review-frontend
-    env: python
+    name: task-review-frontend-react
+    env: static
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run frontend/streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+    buildCommand: cd frontend-react && npm install && npm run build
+    staticPublishPath: ./frontend-react/build
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.7
-      - key: BACKEND_URL
+      - key: REACT_APP_BACKEND_URL
         fromService:
           type: web
           name: task-review-backend
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL
