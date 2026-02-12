@@ -13,9 +13,9 @@ services:
         value: '["*"]'
 
   # Frontend (React) - Static Site
-  - type: static
+  - type: web
     name: task-review-frontend
-    env: static
+    runtime: static
     plan: free
     rootDirectory: frontend
     buildCommand: npm install && npm run build
@@ -24,6 +24,5 @@ services:
       - key: NODE_VERSION
         value: 18.17.1
       - key: REACT_APP_BACKEND_URL
-        # Using the standard predicted URL for the backend
-        # Note: If the backend name changes, this needs to be updated.
+        # Predicted URL for the backend
         value: https://task-review-backend.onrender.com/api/v1/task
