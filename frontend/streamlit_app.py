@@ -13,6 +13,8 @@ import time
 load_dotenv()
 
 BACKEND_BASE_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+if BACKEND_BASE_URL and not BACKEND_BASE_URL.startswith("http"):
+    BACKEND_BASE_URL = f"http://{BACKEND_BASE_URL}"
 BACKEND_URL = f"{BACKEND_BASE_URL.rstrip('/')}/api/v1/task"
 
 TIMEOUT = 10  # Seconds
