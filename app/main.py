@@ -7,25 +7,14 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from .api import task_submit, task_review, next_task
-from .models.mongodb import mongodb
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import sys
 import os
 import json
-from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 load_dotenv()
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup: Connect to MongoDB
-    await mongodb.connect()
-    yield
-    # Shutdown: Clean up if needed
-    if mongodb.client:
-        mongodb.client.close()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,8 +26,7 @@ logger = logging.getLogger("task_review_system")
 app = FastAPI(
     title="Task Review AI - Production Demo",
     description="Deterministic Engineering Task Analysis System (Locked)",
-    version="1.1.0",
-    lifespan=lifespan
+    version="1.1.0"
 )
 
 # Security: CORS Middleware

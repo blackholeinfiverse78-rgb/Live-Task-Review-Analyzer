@@ -22,20 +22,13 @@ async def review_task(
         
         if task_id:
             entry = task_storage.get(task_id)
-            
-            # If not in memory, check MongoDB
-            if not entry:
-                from .mongodb import mongodb
-                entry = await mongodb.get_task(task_id)
-            
             if not entry:
                 logger.warning(f"Task review requested for non-existent ID: {task_id}")
                 raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
             
             # Extract task and metadata
             if isinstance(entry, dict):
-                # If from MongoDB it's already a dict, if from memory it's also a dict now
-                target_task = Task(**entry["task"])
+                target_task = entry["task"]
                 is_demo = entry.get("is_demo", False)
                 demo_type = entry.get("demo_type")
             else:

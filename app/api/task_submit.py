@@ -23,18 +23,12 @@ async def submit_task(payload: TaskCreate):
         )
         
         # Store demo metadata in task if provided (simplified for Day-2)
-        task_data = {
-            "task": new_task.model_dump(),
+        # In a real system, this would be a separate field or a prefix in ID
+        task_storage[task_id] = {
+            "task": new_task,
             "is_demo": payload.is_demo,
             "demo_type": payload.demo_type
         }
-        
-        # Memory Fallback
-        task_storage[task_id] = task_data
-        
-        # Persistent Storage (MongoDB)
-        from .mongodb import mongodb
-        await mongodb.save_task(task_id, task_data)
         
         logger.info(f"Task stored successfully. ID: {task_id}")
         return new_task
