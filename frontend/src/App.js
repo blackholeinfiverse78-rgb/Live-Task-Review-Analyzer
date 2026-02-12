@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000/api/v1/task';
+let BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000/api/v1/task';
+
+// Robustness: Ensure protocol and path
+if (BACKEND_URL && !BACKEND_URL.startsWith('http')) {
+    BACKEND_URL = `https://${BACKEND_URL}`;
+}
+if (BACKEND_URL && !BACKEND_URL.endsWith('/api/v1/task')) {
+    BACKEND_URL = `${BACKEND_URL.replace(/\/$/, '')}/api/v1/task`;
+}
 
 const DEMO_DATA = {
     'Live Editor': { title: '', desc: '', demo: false, type: null },

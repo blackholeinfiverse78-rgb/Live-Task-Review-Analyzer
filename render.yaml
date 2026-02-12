@@ -9,18 +9,20 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.7
-      - key: BACKEND_PORT
-        value: 8000
       - key: ALLOWED_ORIGINS
         value: '["*"]'
 
   # Frontend (React) - Static Site
-  - type: web
+  - type: static
     name: task-review-frontend
     env: static
     plan: free
-    buildCommand: cd frontend && npm install && REACT_APP_BACKEND_URL=$BACKEND_URL npm run build
-    staticPublishPath: ./frontend/build
+    rootDirectory: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
     envVars:
-      - key: BACKEND_URL
-        sync: false
+      - key: REACT_APP_BACKEND_URL
+        fromService:
+          type: web
+          name: task-review-backend
+          property: host
