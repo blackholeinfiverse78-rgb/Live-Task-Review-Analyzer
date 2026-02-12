@@ -22,4 +22,4 @@ services:
         fromService:
           type: web
           name: task-review-backend
-          property: url
+          property: host
