@@ -73,6 +73,32 @@ This application uses **In-Memory Storage** (`LimitedStorage`) for the demo.
 ---
 
 ## Troubleshooting
-- **Build Fails**: Ensure `requirements.txt` is present and doesn't contain platform-specific packages (like `pywin32` which is for Windows only).
-- **Streamlit Port Error**: Render requires services to listen on `$PORT`. Ensure the start command uses `--server.port $PORT`.
-- **CORS Errors**: If the frontend cannot talk to the backend, check the `ALLOWED_ORIGINS` variable in the backend settings.
+
+### Build Fails
+- Ensure `requirements.txt` is present and doesn't contain platform-specific packages (like `pywin32` which is for Windows only).
+- Check the build logs in Render Dashboard for specific error messages.
+
+### Streamlit Port Error
+- Render requires services to listen on `$PORT`. Ensure the start command uses `--server.port $PORT`.
+
+### Backend Offline / Connection Error
+**This is the most common issue on Render's Free Tier.**
+
+**Symptoms**: Frontend shows "Backend Offline" with `ConnectionError` in the sidebar.
+
+**Root Cause**: Internal networking (`task-review-backend` hostname) is unreliable on Render's Free Tier.
+
+**Solution**:
+1. Go to your Render Dashboard
+2. Click on **`task-review-backend`** service
+3. **Copy the public URL** (e.g., `https://task-review-backend-xxxx.onrender.com`)
+4. Click on **`task-review-frontend`** service
+5. Go to **Environment** tab
+6. Find `BACKEND_URL` and click **Edit**
+7. Replace the value with your backend's **public HTTPS URL**
+8. Click **Save Changes**
+9. Wait for the frontend to redeploy (~2-3 minutes)
+
+### CORS Errors
+- If the frontend cannot talk to the backend, check the `ALLOWED_ORIGINS` variable in the backend settings.
+- For development/demo purposes, `["*"]` allows all origins. For production, specify your frontend URL.
