@@ -3,11 +3,25 @@
 Deterministic engineering task assessment system designed for high-reliability technical audits. This system evaluates task definitions against rigorous engineering standards using a modular, rule-based engine.
 
 ## 🏁 Demo Deployment
-1. **Start Backend**: `python -m app.main`
-   - URL: `http://localhost:8000`
-   - Health: `http://localhost:8000/health`
-2. **Start Frontend**: `python -m streamlit run frontend/streamlit_app.py`
-   - URL: `http://localhost:8501`
+
+### Backend
+```bash
+uvicorn app.main:app --reload
+```
+- URL: `http://localhost:8000`
+- Health: `http://localhost:8000/health`
+- API Docs: `http://localhost:8000/docs`
+
+### Frontend (React)
+```bash
+cd frontend
+npm install
+npm start
+```
+- URL: `http://localhost:3000`
+
+### Production Deployment
+See `docs/DEPLOYMENT_RENDER.md` for deploying to Render.
 
 ## 🎯 System Capabilities
 - **Deterministic Scoring**: Identical input always yields identical results.
