@@ -17,7 +17,7 @@ services:
     name: task-review-frontend
     runtime: static
     plan: free
-    rootDirectory: frontend
+    rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: build
     envVars:
