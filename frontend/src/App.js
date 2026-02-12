@@ -6,11 +6,18 @@ let BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000/ap
 
 // Robustness: Ensure protocol and path
 if (BACKEND_URL && !BACKEND_URL.startsWith('http')) {
-    BACKEND_URL = `https://${BACKEND_URL}`;
+    // If it looks like a hostname (no slashes), add https
+    if (!BACKEND_URL.includes('/')) {
+        BACKEND_URL = `https://${BACKEND_URL}.onrender.com/api/v1/task`;
+    } else {
+        BACKEND_URL = `https://${BACKEND_URL}`;
+    }
 }
 if (BACKEND_URL && !BACKEND_URL.endsWith('/api/v1/task')) {
     BACKEND_URL = `${BACKEND_URL.replace(/\/$/, '')}/api/v1/task`;
 }
+
+console.log('Using Backend URL:', BACKEND_URL);
 
 const DEMO_DATA = {
     'Live Editor': { title: '', desc: '', demo: false, type: null },

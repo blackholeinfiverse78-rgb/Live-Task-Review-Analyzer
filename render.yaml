@@ -21,8 +21,9 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: build
     envVars:
+      - key: NODE_VERSION
+        value: 18.17.1
       - key: REACT_APP_BACKEND_URL
-        fromService:
-          type: web
-          name: task-review-backend
-          property: host
+        # Using the standard predicted URL for the backend
+        # Note: If the backend name changes, this needs to be updated.
+        value: https://task-review-backend.onrender.com/api/v1/task
