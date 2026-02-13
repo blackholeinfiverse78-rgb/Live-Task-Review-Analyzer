@@ -3,7 +3,8 @@ from typing import Optional
 import logging
 from ..models.schemas import Task, ReviewOutput, TaskCreate
 from ..models.storage import task_storage
-from ..services.review_engine import ReviewEngine
+
+from ..core.engine_registry import EngineRegistry
 from datetime import datetime
 import uuid
 
@@ -47,7 +48,9 @@ async def review_task(
         else:
             raise HTTPException(status_code=400, detail="Must provide either task_id or payload")
             
-        return ReviewEngine.review_task(target_task)
+        engine = EngineRegistry.get_engine()
+        result_dict = engine.evaluate(target_task.model_dump())
+        return ReviewOutput(**result_dict)
         
     except HTTPException:
         raise

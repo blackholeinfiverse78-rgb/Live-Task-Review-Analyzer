@@ -4,12 +4,26 @@ Updated on: 2026-02-05
 Logic: Modular Deterministic Rule Evaluators
 """
 from ..models.schemas import Task, ReviewOutput, Analysis, Meta
+from ..core.interfaces.review_engine_interface import ReviewEngineInterface
 import logging
 import time
 
 logger = logging.getLogger("task_review_system")
 
-class ReviewEngine:
+# Evaluation Settings
+DETERMINISTIC_MODE = True
+FIXED_EVAL_TIME = 120
+
+class ReviewEngine(ReviewEngineInterface):
+    def evaluate(self, task: dict) -> dict:
+        """
+        Adapter method to satisfy ReviewEngineInterface.
+        Converts dict -> Task -> ReviewOutput -> dict.
+        """
+        task_obj = Task(**task)
+        result = self.review_task(task_obj)
+        return result.model_dump()
+
     @staticmethod
     def _evaluate_title(title: str, failure_reasons: list, hints: list) -> int:
         t_len = len(title)
@@ -94,7 +108,11 @@ class ReviewEngine:
         )
         
         # Meta calculation
-        eval_duration = int((time.time() - start_time) * 1000)
+        if DETERMINISTIC_MODE:
+            eval_duration = FIXED_EVAL_TIME
+        else:
+            eval_duration = int((time.time() - start_time) * 1000)
+            
         meta = Meta(
             evaluation_time_ms=max(1, eval_duration),
             mode="rule"
