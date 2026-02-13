@@ -28,6 +28,8 @@ See `docs/DEPLOYMENT_RENDER.md` for deploying to Render.
 - **Contract Enforcement**: 100% adherence to JSON output schemas (even on failures).
 - **Rule-Based Intelligence**: Evaluates Title Depth, Description Substance, Logical Markers, and Technical Specificity.
 - **Zero-Dependency Storage**: Uses high-speed in-memory persistence for demo environments.
+- **Plug-In Architecture**: Supports hot-swappable review engines via `EngineRegistry` and `ReviewEngineInterface`.
+- **Strict Determinism Toggle**: Configurable deterministic timing (120ms fixed) for zero-variance demos.
 
 ## 📝 Mandatory JSON Contract
 All evaluations return this exact structure:
