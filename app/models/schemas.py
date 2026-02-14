@@ -36,6 +36,12 @@ class Meta(BaseModel):
     evaluation_time_ms: int
     mode: str = Field(..., pattern="^(rule|ml|hybrid)$")
 
+class V2NextTask(BaseModel):
+    title: str
+    objective: str
+    focus_area: str
+    difficulty: str
+
 class ReviewOutput(BaseModel):
     score: int = Field(..., ge=0, le=100)
     readiness_percent: int = Field(..., ge=0, le=100)
@@ -44,6 +50,7 @@ class ReviewOutput(BaseModel):
     improvement_hints: List[str] = Field(default_factory=list)
     analysis: Analysis
     meta: Meta
+    next_task: Optional[V2NextTask] = Field(None, description="Recommended next task block")
 
 class NextTask(BaseModel):
     next_task_title: str
