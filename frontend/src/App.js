@@ -20,22 +20,25 @@ if (BACKEND_URL && !BACKEND_URL.endsWith('/api/v1/task')) {
 console.log('Using Backend URL:', BACKEND_URL);
 
 const DEMO_DATA = {
-    'Live Editor': { title: '', desc: '', demo: false, type: null },
+    'Live Editor': { title: '', desc: '', github: '', demo: false, type: null },
     'Good Submission': {
-        title: 'Build a Secure Async API Gateway for User Authentication and Management',
-        desc: 'The objective is to implement a robust API gateway. Requirements include schema validation using Pydantic, security constraints for JWT, and async database connections. This task ensures production readiness by adding caching and frontend integration layers. Final success criteria: 100% test coverage and full documentation.',
+        title: 'Enterprise-Grade Distributed Task Processing System with Resilience and Monitoring',
+        desc: 'Objective: To architect and implement a horizontally scalable task processing engine. Requirements include high availability via multi-node deployments, failure resilience using exponential backoff with dead-letter queues, and real-time observability. The goal is to ensure 99.9% uptime by utilizing production-grade monitoring suites like Prometheus and Grafana. This requirement covers security constraints for mTLS and internal authentication. The purpose is to handle high-throughput workloads with sub-50ms latency while maintaining full database consistency across shards. Performance optimization is achieved through efficient connection pooling and asynchronous execution patterns. Final success criteria: 100% test coverage and full audit logging.',
+        github: 'https://github.com/fastapi/fastapi',
         demo: true,
         type: 'good'
     },
     'Partial Submission': {
-        title: 'Standardized Implementation of a basic API to handle standardized requests',
-        desc: 'The Requirement is to make it work. The objective is to handle some requests. It should connect to a database eventually. Basic security constraints apply.',
+        title: 'Standard API Implementation for Basic Data Operations and Storage',
+        desc: 'Requirement: The objective is to build an API that connects to a SQL database. It should handle GET and POST requests for user data. Some security constraints like basic auth should be added eventually. The purpose is to make the system work for the initial release. We need to handle basic database connections and ensure some error handling is present in the main controller.',
+        github: 'https://github.com/encode/uvicorn',
         demo: true,
         type: 'partial'
     },
     'Poor Submission': {
-        title: 'Fix bug',
-        desc: 'fix the bugs in the code quickly',
+        title: 'Fix fast',
+        desc: 'fix the bugs in the code quickly. make it run without error. just get it done today.',
+        github: '',
         demo: true,
         type: 'poor'
     }
@@ -58,7 +61,7 @@ function App() {
         const current = DEMO_DATA[scenario];
         setTaskTitle(current.title);
         setTaskDesc(current.desc);
-        setGithubUrl('');
+        setGithubUrl(current.github || '');
         setPdfFile(null);
         setResult(null);
         setError(null);
