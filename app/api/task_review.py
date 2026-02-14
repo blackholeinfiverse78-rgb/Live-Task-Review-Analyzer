@@ -18,6 +18,7 @@ async def review_task(
     github_url: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     pdf_file: Optional[UploadFile] = File(None),
+    submitted_by: Optional[str] = Form(None),
     orchestrator: ReviewOrchestrator = Depends(get_review_orchestrator)
 ):
     try:
@@ -85,7 +86,8 @@ async def review_task(
             orchestration_res = orchestrator.orchestrate_review(
                 description=description,
                 github_url=github_url,
-                pdf_file=pdf_file
+                pdf_file=pdf_file,
+                submitted_by=submitted_by or "Anonymous"
             )
             return orchestration_res.review
 
