@@ -46,6 +46,8 @@ function App() {
     const [taskTitle, setTaskTitle] = useState('');
     const [taskDesc, setTaskDesc] = useState('');
     const [submittedBy, setSubmittedBy] = useState('Demo Professional');
+    const [githubUrl, setGithubUrl] = useState('');
+    const [pdfFile, setPdfFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
@@ -55,6 +57,8 @@ function App() {
         const current = DEMO_DATA[scenario];
         setTaskTitle(current.title);
         setTaskDesc(current.desc);
+        setGithubUrl('');
+        setPdfFile(null);
         setResult(null);
         setError(null);
     }, [scenario]);
@@ -75,43 +79,48 @@ function App() {
         }
     };
 
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setPdfFile(e.target.files[0]);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
         setResult(null);
 
-        const current = DEMO_DATA[scenario];
+        const formData = new FormData();
+        if (taskTitle) formData.append('title', taskTitle); // Title is used for display in orchestrator
+        if (taskDesc) formData.append('description', taskDesc);
+        if (githubUrl) formData.append('github_url', githubUrl);
+        if (pdfFile) formData.append('pdf_file', pdfFile);
+        formData.append('submitted_by', submittedBy);
 
         try {
-            // Phase 1: Submit task
-            const submitResponse = await axios.post(`${BACKEND_URL}/submit`, {
-                task_title: taskTitle,
-                task_description: taskDesc,
-                submitted_by: submittedBy,
-                is_demo: current.demo,
-                demo_type: current.type
+            // Unified Orchestration Call
+            const response = await axios.post(`${BACKEND_URL}/review`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
 
-            const taskId = submitResponse.data.task_id;
-
-            // Phase 2: Review task
-            const reviewResponse = await axios.post(`${BACKEND_URL}/review`, {
-                task_id: taskId
-            });
-
-            const reviewData = reviewResponse.data;
-
-            // Phase 3: Generate next task
-            const nextTaskResponse = await axios.post(`${BACKEND_URL}/generate-next`, reviewData);
-            const nextTaskData = nextTaskResponse.data;
+            const reviewData = response.data;
+            const nextTaskData = reviewData.next_task || {
+                title: 'Proceed to Next Step',
+                objective: 'General follow-up.',
+                difficulty: 'medium'
+            };
 
             setResult({ review: reviewData, nextTask: nextTaskData });
         } catch (err) {
-            if (err.response?.status === 422) {
-                setResult({ review: err.response.data, nextTask: { next_task_title: 'Input Fix Required', rationale: 'Validation thresholds not met.' } });
+            console.error('Submission Error:', err);
+            const detail = err.response?.data?.detail;
+            if (Array.isArray(detail)) {
+                setError(detail.map(d => d.msg).join(', '));
             } else {
-                setError(err.response?.data?.detail || err.message || 'An error occurred');
+                setError(detail || err.message || 'An error occurred during analysis');
             }
         } finally {
             setLoading(false);
@@ -186,6 +195,31 @@ function App() {
                         </div>
 
                         <div className="form-group">
+                            <label htmlFor="github">GitHub Repository URL (Optional)</label>
+                            <input
+                                id="github"
+                                type="text"
+                                value={githubUrl}
+                                onChange={(e) => setGithubUrl(e.target.value)}
+                                disabled={isDisabled}
+                                className="text-input"
+                                placeholder="https://github.com/user/repo"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="pdf">Project Documentation (PDF - Optional)</label>
+                            <input
+                                id="pdf"
+                                type="file"
+                                accept=".pdf"
+                                onChange={handleFileChange}
+                                disabled={isDisabled}
+                                className="file-input"
+                            />
+                        </div>
+
+                        <div className="form-group">
                             <label htmlFor="name">Your Name</label>
                             <input
                                 id="name"
@@ -243,7 +277,7 @@ function App() {
                                 <div className="progress-grid">
                                     <div className="progress-item">
                                         <div className="progress-header">
-                                            <span>Technical Quality</span>
+                                            <span>Technical Quality (Repo)</span>
                                             <span>{result.review.analysis.technical_quality}%</span>
                                         </div>
                                         <div className="progress-bar">
@@ -252,7 +286,7 @@ function App() {
                                     </div>
                                     <div className="progress-item">
                                         <div className="progress-header">
-                                            <span>Clarity</span>
+                                            <span>Clarity (Desc)</span>
                                             <span>{result.review.analysis.clarity}%</span>
                                         </div>
                                         <div className="progress-bar">
@@ -261,7 +295,7 @@ function App() {
                                     </div>
                                     <div className="progress-item">
                                         <div className="progress-header">
-                                            <span>Discipline Signals</span>
+                                            <span>Discipline Signals (PDF)</span>
                                             <span>{result.review.analysis.discipline_signals}%</span>
                                         </div>
                                         <div className="progress-bar">
@@ -296,8 +330,9 @@ function App() {
                             <div className="next-task-section">
                                 <div className="next-task-card">
                                     <h3>💡 Recommended Next Step</h3>
-                                    <p className="next-task-title">{result.nextTask.next_task_title}</p>
-                                    <p className="next-task-rationale"><strong>Rationale:</strong> {result.nextTask.rationale}</p>
+                                    <p className="next-task-title">{result.nextTask.title}</p>
+                                    <p className="next-task-rationale"><strong>Objective:</strong> {result.nextTask.objective}</p>
+                                    <p className="next-task-rationale"><strong>Focus:</strong> {result.nextTask.focus_area}</p>
                                 </div>
                             </div>
 
