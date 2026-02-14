@@ -52,6 +52,7 @@ function App() {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
     const [backendStatus, setBackendStatus] = useState('checking');
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
     useEffect(() => {
         const current = DEMO_DATA[scenario];
@@ -66,6 +67,14 @@ function App() {
     useEffect(() => {
         checkBackendHealth();
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    };
 
     const checkBackendHealth = async () => {
         try {
@@ -139,16 +148,25 @@ function App() {
     const isDisabled = DEMO_DATA[scenario].demo;
 
     return (
-        <div className="App">
+        <div className={`App ${theme}`}>
             <div className="container">
                 <header className="header">
                     <div className="header-content">
                         <h1 className="title">🛡️ Task Review AI</h1>
                         <p className="subtitle">Deterministic Engineering Task Analysis System</p>
                     </div>
-                    <div className={`status-badge ${backendStatus}`}>
-                        <span className="status-dot"></span>
-                        Backend {backendStatus === 'online' ? 'Online' : backendStatus === 'offline' ? 'Offline' : 'Checking...'}
+                    <div className="header-actions">
+                        <button
+                            className="theme-toggle"
+                            onClick={toggleTheme}
+                            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                        >
+                            {theme === 'light' ? '🌙' : '☀️'}
+                        </button>
+                        <div className={`status-badge ${backendStatus}`}>
+                            <span className="status-dot"></span>
+                            Backend {backendStatus === 'online' ? 'Online' : backendStatus === 'offline' ? 'Offline' : 'Checking...'}
+                        </div>
                     </div>
                 </header>
 
