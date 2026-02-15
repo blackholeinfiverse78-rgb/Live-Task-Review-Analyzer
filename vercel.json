@@ -22,6 +22,10 @@
             "destination": "/frontend/index.html"
         },
         {
+            "source": "/(css|js|assets|img|src)/(.*)",
+            "destination": "/frontend/$1/$2"
+        },
+        {
             "source": "/(.*)",
             "destination": "/frontend/$1"
         }

@@ -555,20 +555,26 @@
 
         async function checkBackendHealth() {
             const healthUrl = BACKEND_URL.replace('/api/v1/task', '/health');
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+
             console.log('🔍 Checking health at:', healthUrl);
             try {
                 const response = await fetch(healthUrl);
-                console.log('🩺 Health response status:', response.status);
-                if (response.ok) {
-                    document.getElementById('statusBadge').className = 'status-badge online';
-                    document.getElementById('statusText').textContent = 'Backend Online';
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && data.status !== 'error') {
+                    statusBadge.className = 'status-badge online';
+                    statusText.textContent = 'Backend Online';
                 } else {
-                    throw new Error(`Health check failed with status: ${response.status}`);
+                    statusBadge.className = 'status-badge offline';
+                    statusText.textContent = data.error_message ? `Error: ${data.error_message}` : `Offline (${response.status})`;
+                    console.error('❌ Backend reported error:', data);
                 }
             } catch (error) {
-                console.error('❌ Health check error:', error);
-                document.getElementById('statusBadge').className = 'status-badge offline';
-                document.getElementById('statusText').textContent = 'Backend Offline';
+                console.error('❌ Health check request failed:', error);
+                statusBadge.className = 'status-badge offline';
+                statusText.textContent = 'Connection Refused';
             }
         }
 
