@@ -554,27 +554,35 @@
         }
 
         async function checkBackendHealth() {
-            const healthUrl = BACKEND_URL.replace('/api/v1/task', '/health');
+            // Force bypass cache with timestamp
+            const healthUrl = `${window.location.origin}/health?t=${Date.now()}`;
             const statusBadge = document.getElementById('statusBadge');
             const statusText = document.getElementById('statusText');
 
-            console.log('🔍 Checking health at:', healthUrl);
+            console.log('� Pinging Backend:', healthUrl);
+
             try {
-                const response = await fetch(healthUrl);
+                const response = await fetch(healthUrl, { cache: 'no-store' });
                 const data = await response.json().catch(() => ({}));
 
-                if (response.ok && data.status !== 'error') {
+                console.log('📥 Response:', response.status, data);
+
+                if (response.ok && (data.status === 'healthy' || data.message)) {
                     statusBadge.className = 'status-badge online';
                     statusText.textContent = 'Backend Online';
+                } else if (data.status === 'error') {
+                    // This is our diagnostic fallback!
+                    statusBadge.className = 'status-badge offline';
+                    statusText.textContent = `Backend Error: ${data.error_type}`;
+                    alert(`🚨 Backend Crash Detected!\n\n${data.error_message}\n\nPlease check Vercel Logs.`);
                 } else {
                     statusBadge.className = 'status-badge offline';
-                    statusText.textContent = data.error_message ? `Error: ${data.error_message}` : `Offline (${response.status})`;
-                    console.error('❌ Backend reported error:', data);
+                    statusText.textContent = `Error ${response.status}`;
                 }
             } catch (error) {
-                console.error('❌ Health check request failed:', error);
+                console.error('🛑 Network Error:', error);
                 statusBadge.className = 'status-badge offline';
-                statusText.textContent = 'Connection Refused';
+                statusText.textContent = 'Server Unreachable';
             }
         }
 
