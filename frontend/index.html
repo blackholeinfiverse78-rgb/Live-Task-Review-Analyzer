@@ -512,13 +512,9 @@
             window.location.hostname === '127.0.0.1' ||
             window.location.protocol === 'file:';
 
-        const BACKEND_URL = isLocal
-            ? 'http://localhost:3000/api/v1/task'
-            : `${window.location.origin}/api/v1/task`;
-
-        const TTS_URL = isLocal
-            ? 'http://localhost:3000/api/v1/tts'
-            : `${window.location.origin}/api/v1/tts`;
+        const BASE_URL = isLocal ? 'http://localhost:3000' : window.location.origin;
+        const BACKEND_URL = `${BASE_URL}/api/v1/task`;
+        const TTS_URL = `${BASE_URL}/api/v1/tts`;
 
         console.log('🌐 Backend URL:', BACKEND_URL);
         console.log('🔊 TTS URL:', TTS_URL);
@@ -559,11 +555,11 @@
 
         async function checkBackendHealth() {
             // Force bypass cache with timestamp
-            const healthUrl = `${window.location.origin}/health?t=${Date.now()}`;
+            const healthUrl = `${BASE_URL}/health?t=${Date.now()}`;
             const statusBadge = document.getElementById('statusBadge');
             const statusText = document.getElementById('statusText');
 
-            console.log('� Pinging Backend:', healthUrl);
+            console.log('📡 Pinging Backend:', healthUrl);
 
             try {
                 const response = await fetch(healthUrl, { cache: 'no-store' });
