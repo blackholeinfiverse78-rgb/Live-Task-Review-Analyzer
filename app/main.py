@@ -30,16 +30,23 @@ app = FastAPI(
 )
 
 # Security: CORS Middleware
-allowed_origins = os.getenv("ALLOWED_ORIGINS", '["*"]')
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
 try:
-    origins = json.loads(allowed_origins)
+    if allowed_origins == "*":
+        origins = ["*"]
+    else:
+        origins = json.loads(allowed_origins)
 except:
     origins = ["*"]
 
+# Conflict: allow_origins=['*'] cannot be used with allow_credentials=True
+# If origins is ['*'], we must set allow_credentials=False or specify origins
+allow_all = "*" in origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=origins if not allow_all else ["*"],
+    allow_credentials=not allow_all, # Disable credentials if allowing all
     allow_methods=["*"],
     allow_headers=["*"],
 )
