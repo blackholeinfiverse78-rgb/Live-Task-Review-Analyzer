@@ -508,11 +508,15 @@
 
     <script>
         // Auto-detect backend URL based on environment
-        const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const isLocal = window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.protocol === 'file:';
+
+        const BACKEND_URL = isLocal
             ? 'http://localhost:3000/api/v1/task'
             : `${window.location.origin}/api/v1/task`;
 
-        const TTS_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const TTS_URL = isLocal
             ? 'http://localhost:3000/api/v1/tts'
             : `${window.location.origin}/api/v1/tts`;
 
