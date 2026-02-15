@@ -554,15 +554,19 @@
         }
 
         async function checkBackendHealth() {
+            const healthUrl = BACKEND_URL.replace('/api/v1/task', '/health');
+            console.log('🔍 Checking health at:', healthUrl);
             try {
-                const response = await fetch(BACKEND_URL.replace('/api/v1/task', '/health'));
+                const response = await fetch(healthUrl);
+                console.log('🩺 Health response status:', response.status);
                 if (response.ok) {
                     document.getElementById('statusBadge').className = 'status-badge online';
                     document.getElementById('statusText').textContent = 'Backend Online';
                 } else {
-                    throw new Error('Backend offline');
+                    throw new Error(`Health check failed with status: ${response.status}`);
                 }
             } catch (error) {
+                console.error('❌ Health check error:', error);
                 document.getElementById('statusBadge').className = 'status-badge offline';
                 document.getElementById('statusText').textContent = 'Backend Offline';
             }
