@@ -90,15 +90,6 @@ app.include_router(orchestration.router, prefix="/api/v1/orchestration", tags=["
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["Tools"])
 
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Task Review AI Backend is Online",
-        "documentation": "/docs",
-        "health": "/health",
-        "version": "1.1.0"
-    }
-
 @app.get("/health")
 async def health():
     return {"status": "healthy", "version": "1.1.0"}
