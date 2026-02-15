@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test - Check if TTS is in HTML</title>
+</head>
+
+<body>
+    <h1>Checking frontend/index.html for TTS...</h1>
+    <script>
+        fetch('index.html')
+            .then(r => r.text())
+            .then(html => {
+                const hasTTS = html.includes('ttsSection');
+                const hasAudio = html.includes('ttsAudio');
+                const hasSpeakFunction = html.includes('speakResults');
+
+                document.body.innerHTML += `
+                    <h2>Results:</h2>
+                    <p>TTS Section: ${hasTTS ? '✅ FOUND' : '❌ NOT FOUND'}</p>
+                    <p>Audio Element: ${hasAudio ? '✅ FOUND' : '❌ NOT FOUND'}</p>
+                    <p>Speak Function: ${hasSpeakFunction ? '✅ FOUND' : '❌ NOT FOUND'}</p>
+                    <hr>
+                    <p><strong>If all are FOUND, the TTS is in the file!</strong></p>
+                    <p><strong>Try a HARD REFRESH: Ctrl+Shift+R or Ctrl+F5</strong></p>
+                `;
+            });
+    </script>
+</body>
+
+</html>

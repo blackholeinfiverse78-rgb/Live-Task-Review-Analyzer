@@ -13,3 +13,17 @@ venv.bak/
 *.swp
 *.swo
 .DS_Store
+
+# Vercel
+.vercel
+.vercel_build_output/
+
+# Test files
+test_*.py
+*_test.py
+system_test_results.json
+SYSTEM_TEST_REPORT.md
+
+# Documentation (optional - remove if you want to include)
+# *.md
+

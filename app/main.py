@@ -6,7 +6,7 @@ Version: 1.1.1
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from .api import task_submit, task_review, next_task, orchestration
+from .api import task_submit, task_review, next_task, orchestration, tts
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import sys
@@ -80,6 +80,7 @@ app.include_router(task_submit.router, prefix="/api/v1/task", tags=["PROD"])
 app.include_router(task_review.router, prefix="/api/v1/task", tags=["PROD"])
 app.include_router(next_task.router, prefix="/api/v1/task", tags=["PROD"])
 app.include_router(orchestration.router, prefix="/api/v1/orchestration", tags=["V2-Autonomous"])
+app.include_router(tts.router, prefix="/api/v1/tts", tags=["Tools"])
 
 
 @app.get("/")
@@ -97,6 +98,6 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    host = os.getenv("BACKEND_HOST", "0.0.0.0")
-    port = int(os.getenv("BACKEND_PORT", "8000"))
+    host = os.getenv("HOST", os.getenv("BACKEND_HOST", "0.0.0.0"))
+    port = int(os.getenv("PORT", os.getenv("BACKEND_PORT", "8000")))
     uvicorn.run(app, host=host, port=port)
