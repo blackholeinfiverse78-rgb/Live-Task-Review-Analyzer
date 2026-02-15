@@ -1,26 +1,25 @@
 {
     "version": 2,
-    "builds": [
+    "rewrites": [
         {
-            "src": "api/index.py",
-            "use": "@vercel/python"
+            "source": "/api/(.*)",
+            "destination": "/api/index.py"
         },
         {
-            "src": "frontend/**",
-            "use": "@vercel/static"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/(api|health|docs|openapi.json)(.*)",
-            "dest": "api/index.py"
+            "source": "/health",
+            "destination": "/api/index.py"
         },
         {
-            "src": "/(.*)",
-            "dest": "frontend/$1"
+            "source": "/docs",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/openapi.json",
+            "destination": "/api/index.py"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/frontend/$1"
         }
-    ],
-    "env": {
-        "PYTHONPATH": "."
-    }
+    ]
 }
