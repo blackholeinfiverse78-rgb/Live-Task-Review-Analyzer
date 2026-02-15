@@ -1,4 +1,8 @@
-import pyttsx3
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
+
 import uuid
 import os
 import re
@@ -9,7 +13,16 @@ def initialize_tts_engine(language='en'):
     """
     Initialize and configure the TTS engine with language support
     """
-    engine = pyttsx3.init()
+    if not pyttsx3:
+        # If pyttsx3 is not available, return a mock or handle gracefully
+        # In this project, gTTS is the preferred fallback
+        return None
+    
+    try:
+        engine = pyttsx3.init()
+    except Exception as e:
+        print(f"[TTS] pyttsx3 initialization failed: {e}")
+        return None
     
     # Language to voice mapping (based on common SAPI5 voice names and language codes)
     language_mapping = {
@@ -62,6 +75,9 @@ def initialize_tts_engine(language='en'):
     
     return engine
 
+def is_tts_engine_ready(engine):
+    return engine is not None
+
 
 def text_to_speech_simple(text, output_filename=None):
     """
@@ -78,6 +94,8 @@ def text_to_speech_simple(text, output_filename=None):
     
     # Initialize TTS engine
     engine = initialize_tts_engine()
+    if not engine:
+        raise Exception("TTS engine (pyttsx3) is not available on this system")
     
     # Generate audio file
     engine.save_to_file(text, output_filename)
@@ -226,6 +244,9 @@ def text_to_speech_stream(text, language='en', use_google_tts=True, translate=Tr
     
     if not use_google_tts:
         engine = initialize_tts_engine(language)
+        if not engine:
+             raise RuntimeError("No TTS engine available (pyttsx3 failed and gTTS skipped/failed)")
+
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
             temp_filepath = temp_file.name
 
@@ -249,6 +270,9 @@ def speak_text_directly(text):
     if not text:
         raise ValueError("Text is required")
     engine = initialize_tts_engine()
+    if not engine:
+        print(f"[TTS] Cannot speak directly: pyttsx3 engine not available")
+        return
     engine.say(text)
     engine.runAndWait()
 
